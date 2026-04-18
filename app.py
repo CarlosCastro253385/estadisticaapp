@@ -131,3 +131,41 @@ if 'df' in st.session_state:
     ax.set_title(f"Prueba {tipo_test}")
     ax.legend()
     st.pyplot(fig)
+    
+st.header("4. Análisis con Inteligencia Artificial")
+
+api_key = st.text_input("Introduce tu Gemini API Key", type="password")
+
+if api_key:
+    import google.generativeai as genai
+    
+    try:
+        genai.configure(api_key=api_key)
+        
+        modelos_disponibles = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        
+        if modelos_disponibles:
+            modelo_nombre = modelos_disponibles[0] 
+            model = genai.GenerativeModel(modelo_nombre)
+            
+            if st.button("Consultar a Gemini"):
+                prompt = f"""
+                Analiza como experto estadístico:
+                - Variable: {col_analisis}
+                - Z: {z_stat:.4f}, P-value: {p_val:.4f}, Alpha: {alpha}
+                - Decisión: {"Rechaza H0" if p_val < alpha else "No rechaza H0"}
+                Explica brevemente la conclusión.
+                """
+                
+                with st.spinner(f"Conectando con {modelo_nombre}..."):
+                    response = model.generate_content(prompt)
+                    st.success("¡Análisis completado!")
+                    st.markdown(response.text)
+        else:
+            st.error("No se encontraron modelos disponibles para esta API Key.")
+            
+    except Exception as e:
+        st.error(f"Error de configuración: {e}")
+        st.info("Tip: Asegúrate de que tu API Key sea de 'Google AI Studio' y no de 'Google Cloud'.")
+else:
+    st.warning("Introduce tu API Key para continuar.")
