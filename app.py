@@ -65,3 +65,40 @@ if 'df' in st.session_state:
         outliers = st.radio("¿Hay outliers?", ["Sí", "No"])
 else:
     st.warning("Por favor, carga o genera datos primero en la sección 1.")
+
+st.header("3. Prueba de Hipótesis Z")
+
+if 'df' in st.session_state:
+    from scipy import stats
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        mu_0 = st.number_input("Hipótesis Nula (Media H0)", value=50.0)
+        alpha = st.number_input("Nivel de significancia (α)", value=0.05, min_value=0.01, max_value=0.10)
+    
+    with col2:
+        tipo_test = st.selectbox("Tipo de prueba", ["Bilateral", "Cola Derecha", "Cola Izquierda"])
+        sigma = st.number_input("Desviación Estándar Poblacional (σ)", value=10.0)
+
+    datos = st.session_state['df'][col_analisis]
+    n = len(datos)
+    media_muestral = datos.mean()
+    
+    z_stat = (media_muestral - mu_0) / (sigma / np.sqrt(n))
+    
+    if tipo_test == "Bilateral":
+        p_val = 2 * (1 - stats.norm.cdf(abs(z_stat)))
+    elif tipo_test == "Cola Derecha":
+        p_val = 1 - stats.norm.cdf(z_stat)
+    else: 
+        p_val = stats.norm.cdf(z_stat)
+
+    st.subheader("Resultados de la Prueba")
+    st.write(f"Estadístico Z: **{z_stat:.4f}**")
+    st.write(f"P-value: **{p_val:.4f}**")
+
+    if p_val < alpha:
+        st.error("Resultado: Se rechaza la Hipótesis Nula (H0)")
+    else:
+        st.success("Resultado: No se rechaza la Hipótesis Nula (H0)")
